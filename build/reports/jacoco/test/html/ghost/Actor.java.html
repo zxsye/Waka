@@ -1,0 +1,114 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>Actor.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">Milestone</a> &gt; <a href="index.source.html" class="el_package">ghost</a> &gt; <span class="el_source">Actor.java</span></div><h1>Actor.java</h1><pre class="source lang-java linenums">package ghost;
+
+import processing.core.PImage;
+
+public abstract class Actor implements Collide {
+    protected int x, y;
+    protected int startX, startY;
+    protected int speed;
+    protected App app;
+    protected Direction nexDir;
+    protected Direction curDir;
+
+    // Animation
+    protected PImage sprite;
+
+<span class="fc" id="L16">    public Actor(int x, int y, int speed, App app) {</span>
+<span class="fc" id="L17">        this.app = app;</span>
+<span class="fc" id="L18">        this.x = x * 16;</span>
+<span class="fc" id="L19">        this.y = y * 16;</span>
+<span class="fc" id="L20">        this.startX = this.x;</span>
+<span class="fc" id="L21">        this.startY = this.y;</span>
+<span class="fc" id="L22">        this.speed = speed;</span>
+
+<span class="fc" id="L24">        this.nexDir = Direction.LEFT;</span>
+<span class="fc" id="L25">        this.curDir = Direction.LEFT;</span>
+
+<span class="fc" id="L27">    }</span>
+<span class="fc" id="L28">    public Actor(int pixelX, int pixelY) {</span>
+<span class="fc" id="L29">        this.x = pixelX;</span>
+<span class="fc" id="L30">        this.y = pixelY;</span>
+<span class="fc" id="L31">    }</span>
+    public boolean draw() {
+<span class="fc" id="L33">        app.image(this.sprite, this.x-4, this.y-4);</span>
+<span class="fc" id="L34">        return true;</span>
+    }
+
+    public int getTop() {
+<span class="fc" id="L38">        return this.y;</span>
+    }
+    public int getBottom() {
+<span class="fc" id="L41">        return this.y + 16;</span>
+    }
+    public int getLeft() {
+<span class="fc" id="L44">        return this.x;</span>
+    }
+    public int getRight() {
+<span class="fc" id="L47">        return this.x + 16;</span>
+    }
+    public int getx() {
+<span class="fc" id="L50">        return this.x;</span>
+    }
+    public int gety() {
+<span class="fc" id="L53">        return this.y;</span>
+    }
+    public abstract boolean tick();
+    public abstract boolean move();
+
+    public boolean tryMove(Direction d) {
+<span class="fc bfc" id="L59" title="All 2 branches covered.">        if (d == Direction.STOP) {</span>
+<span class="fc" id="L60">            return false;</span>
+        }
+
+<span class="fc" id="L63">        int[] coords = d.update(this.x, this.y, this.speed);</span>
+<span class="fc" id="L64">        int ox = this.x;</span>
+<span class="fc" id="L65">        int oy = this.y;</span>
+
+<span class="fc" id="L67">        this.x = coords[0];</span>
+<span class="fc" id="L68">        this.y = coords[1];</span>
+
+<span class="fc bfc" id="L70" title="All 2 branches covered.">        if (interact() == -1) {</span>
+<span class="fc" id="L71">            this.app.getManager().death();</span>
+<span class="fc" id="L72">            return false;</span>
+<span class="fc bfc" id="L73" title="All 2 branches covered.">        } else if (this.checkWall()) {</span>
+<span class="fc" id="L74">            this.x = ox;</span>
+<span class="fc" id="L75">            this.y = oy;</span>
+<span class="fc" id="L76">            return false;</span>
+        }
+<span class="fc" id="L78">        return true;</span>
+
+    }
+    public boolean checkWall() {
+        // Checks whether current Actor collides with ANY CELL
+<span class="fc" id="L83">        Cell[][] grid = this.app.getManager().getArena().getGrid();</span>
+
+<span class="fc bfc" id="L85" title="All 2 branches covered.">        for (Cell[] row : grid) {</span>
+<span class="fc bfc" id="L86" title="All 2 branches covered.">            for (Cell c : row) {</span>
+<span class="fc bfc" id="L87" title="All 4 branches covered.">                if (c.isWall() &amp;&amp; this.isCollide(c)) {</span>
+<span class="fc" id="L88">                    return true;</span>
+                }
+            }
+        }
+<span class="fc" id="L92">        return false;</span>
+    }
+    public void changeDirection(int keyCode) {
+        // Used for user-directed change in direction
+<span class="fc bfc" id="L96" title="All 2 branches covered.">        if (keyCode == App.UP) {</span>
+<span class="fc" id="L97">            nexDir = Direction.UP;</span>
+<span class="fc bfc" id="L98" title="All 2 branches covered.">        } else if (keyCode == App.DOWN) {</span>
+<span class="fc" id="L99">            nexDir = Direction.DOWN;</span>
+<span class="fc bfc" id="L100" title="All 2 branches covered.">        } else if (keyCode == App.LEFT) {</span>
+<span class="fc" id="L101">            nexDir = Direction.LEFT;</span>
+<span class="fc bfc" id="L102" title="All 2 branches covered.">        } else if (keyCode == App.RIGHT) {</span>
+<span class="fc" id="L103">            nexDir = Direction.RIGHT;</span>
+        }
+<span class="fc" id="L105">    }</span>
+    public abstract int interact();
+    public void resetActor() {
+<span class="fc" id="L108">        this.x = this.startX;</span>
+<span class="fc" id="L109">        this.y = this.startY;</span>
+<span class="fc" id="L110">        changeDirection(App.LEFT);</span>
+<span class="fc" id="L111">    }</span>
+
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.5.201910111838</span></div></body></html>

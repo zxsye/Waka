@@ -1,0 +1,78 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>App.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">Milestone</a> &gt; <a href="index.source.html" class="el_package">ghost</a> &gt; <span class="el_source">App.java</span></div><h1>App.java</h1><pre class="source lang-java linenums">package ghost;
+
+import processing.core.PApplet;
+import processing.core.PFont;
+
+public class App extends PApplet {
+
+    public static final int WIDTH = 448;
+    public static final int HEIGHT = 576;
+
+    private AssetManager manager;
+    private PFont font;
+
+    /**
+    * Constructs an app file with a manager attribute.
+    */
+<span class="fc" id="L17">    public App() {</span>
+<span class="fc" id="L18">        this.manager = new AssetManager(this);</span>
+<span class="fc" id="L19">    }</span>
+
+    /**
+    * Sets up the entire game by calling manager to parse the configuration file.
+    * Sets framerate to 60fps, and loads font for printing messages.
+    */
+    public void setup() {
+<span class="fc" id="L26">        frameRate(60);</span>
+<span class="fc" id="L27">        this.manager.parseConfig();</span>
+
+        // Load Font
+<span class="fc" id="L30">        this.font = this.createFont(&quot;src/main/resources/PressStart2P-Regular.ttf&quot;, 2, true);</span>
+<span class="fc" id="L31">        textFont(this.font, 15);</span>
+<span class="fc" id="L32">        fill(255);</span>
+<span class="fc" id="L33">        this.stroke(255); // DEBUG LINE COLOUR</span>
+
+<span class="fc" id="L35">    }</span>
+
+    /**
+    * Sets the window sizes for the display.
+    */
+    public void settings() {
+<span class="fc" id="L41">        size(WIDTH, HEIGHT);</span>
+<span class="fc" id="L42">    }</span>
+
+    /**
+    * Draws the current state of the game. Drawing a black background and calling
+    * the manager to draw all other game assets.
+    */
+    public void draw() {
+<span class="fc" id="L49">        background(0, 0, 0);</span>
+<span class="fc" id="L50">        this.getManager().draw();</span>
+<span class="fc" id="L51">    }</span>
+
+    /**
+    * Returns the game asset manager.
+    * @return the game asset manager.
+    */
+    public AssetManager getManager() {
+<span class="fc" id="L58">        return this.manager;</span>
+    }
+
+    /**
+    * Passes any key pressed to the asset manager.
+    */
+    public void keyPressed() {
+        // only change direction when not closed
+<span class="nc" id="L66">        this.manager.userInput(key, keyCode);</span>
+
+<span class="nc" id="L68">    }</span>
+
+    /**
+    * Begins the game application.
+    * @param args the command line, or shell, arguments
+    */
+    public static void main(String[] args) {
+<span class="nc" id="L75">        PApplet.main(&quot;ghost.App&quot;);</span>
+<span class="nc" id="L76">    }</span>
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.5.201910111838</span></div></body></html>

@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<testsuite name="ghost.GhostTest" tests="9" skipped="0" failures="0" errors="0" timestamp="2020-11-22T12:08:45" hostname="Zis-MacBook-Pro.local" time="4.097">
+  <properties/>
+  <testcase name="sodaBehaviour()" classname="ghost.GhostTest" time="0.243"/>
+  <testcase name="scatterToChase()" classname="ghost.GhostTest" time="1.829"/>
+  <testcase name="calculators()" classname="ghost.GhostTest" time="0.32"/>
+  <testcase name="resets()" classname="ghost.GhostTest" time="0.375"/>
+  <testcase name="simple()" classname="ghost.GhostTest" time="0.224"/>
+  <testcase name="normalBehaviour()" classname="ghost.GhostTest" time="0.234"/>
+  <testcase name="cornerBehaviour()" classname="ghost.GhostTest" time="0.158"/>
+  <testcase name="frightenedBehaviour()" classname="ghost.GhostTest" time="0.45"/>
+  <testcase name="deadBehaviour()" classname="ghost.GhostTest" time="0.242"/>
+  <system-out><![CDATA[]]></system-out>
+  <system-err><![CDATA[]]></system-err>
+</testsuite>

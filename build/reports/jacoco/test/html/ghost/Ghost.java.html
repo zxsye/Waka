@@ -1,0 +1,533 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>Ghost.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">Milestone</a> &gt; <a href="index.source.html" class="el_package">ghost</a> &gt; <span class="el_source">Ghost.java</span></div><h1>Ghost.java</h1><pre class="source lang-java linenums">package ghost;
+
+import processing.core.PImage;
+import java.util.*;
+import java.lang.Math;
+import java.util.Random;
+
+public class Ghost extends Actor {
+
+    protected List&lt;Integer&gt; modeLengths;
+    protected GhostMode curMode;
+    protected GhostMode prevMode;
+    protected int curModeLength; // current mode length (seconds)
+    protected int curModeLengthIndex; // which number of modes currently on
+    protected int numOfModes; // number of periods
+    protected long myFrames; // frames into current mode period
+
+    protected Cell[] corners;
+    protected Cell corner;
+    protected Waka player;
+    protected Collide target;
+
+    // FRIGHTENED MODE
+    protected PImage normalSprite;
+    protected PImage frightSprite;
+    protected PImage sodaSprite;
+
+    protected boolean isSodaFrightened;
+    protected int frightenedLength;
+    protected int frightenedCounter;
+
+    protected boolean death;
+    protected Random genRandom;
+
+    /**
+    * Constructs a ghost with x and y grid coordinates.
+    * @param x the x grid coordinate
+    * @param y the y grid coordinate
+    * @param speed the speed
+    * @param app the app, used for drawing
+    * @param modeLengths a list of integers specifying time spent on each mode,
+    * scatter or chase
+    */
+    public Ghost(int x, int y, int speed, App app, List&lt;Integer&gt; modeLengths) {
+<span class="fc" id="L45">        super(x, y, speed, app);</span>
+<span class="fc" id="L46">        this.death = false;</span>
+
+        // SPRITE ART
+<span class="fc" id="L49">        this.normalSprite = app.loadImage(&quot;src/main/resources/ghost.png&quot;);</span>
+<span class="fc" id="L50">        this.frightSprite = app.loadImage(&quot;src/main/resources/frightened.png&quot;);</span>
+<span class="fc" id="L51">        this.sodaSprite = app.loadImage(&quot;src/main/resources/sodaGhost.png&quot;);</span>
+<span class="fc" id="L52">        this.sprite = this.normalSprite;</span>
+
+        // USUAL MODES
+<span class="fc" id="L55">        this.modeLengths = modeLengths;</span>
+<span class="fc" id="L56">        this.curMode = GhostMode.SCATTER;</span>
+<span class="fc" id="L57">        this.curModeLength = modeLengths.get(0);</span>
+<span class="fc" id="L58">        this.curModeLengthIndex = 0;</span>
+<span class="fc" id="L59">        this.numOfModes = modeLengths.size();</span>
+<span class="fc" id="L60">        this.myFrames = 0;</span>
+
+        // FRIGHTENED MODES
+<span class="fc" id="L63">        this.frightenedLength = this.app.getManager().getFrightenedLength();</span>
+<span class="fc" id="L64">        this.frightenedCounter = 0;</span>
+<span class="fc" id="L65">        this.genRandom = new Random();</span>
+
+<span class="fc" id="L67">        this.isSodaFrightened = false;</span>
+
+        // SETUP OF CORNERS
+<span class="fc" id="L70">        Cell corner1 = this.app.getManager().getArena().getGrid()[0][0];</span>
+<span class="fc" id="L71">        Cell corner2 = this.app.getManager().getArena().getGrid()[0][28-1];</span>
+<span class="fc" id="L72">        Cell corner3 = this.app.getManager().getArena().getGrid()[36-1][28-1];</span>
+<span class="fc" id="L73">        Cell corner4 = this.app.getManager().getArena().getGrid()[36-1][0];</span>
+
+<span class="fc" id="L75">        this.corners = new Cell[] {corner1, corner2, corner3, corner4};</span>
+<span class="fc" id="L76">        this.corner = corner1; // CHASE type is TopLeft</span>
+<span class="fc" id="L77">        this.player = this.app.getManager().getPlayer();</span>
+<span class="fc" id="L78">    }</span>
+
+    /**
+    * Returns current mode of the ghost.
+    * @return current mode
+    */
+    public GhostMode getCurMode() {
+<span class="fc" id="L85">        return this.curMode;</span>
+    }
+
+    /**
+    * Returns previous mode of the ghost, used when ghost exiting frightened mode
+    * and returning to its previous mode.
+    * @return previous mode
+    */
+    public GhostMode getPrevMode() {
+<span class="fc" id="L94">        return this.prevMode;</span>
+    }
+
+    /**
+    * Returns the corner cell the ghost will scatter towards.
+    * @return the ghost's target corner cell
+    */
+    public Cell getCorner() {
+<span class="fc" id="L102">        return this.corner;</span>
+    }
+
+    /**
+    * Draws the ghost. The image depends on its current state as frightened,
+    * normal, or invisible.
+    * @return true if ghost can be drawn, otherwise false when dead
+    */
+    public boolean draw() {
+<span class="fc bfc" id="L111" title="All 2 branches covered.">        if (this.isDead()) {</span>
+<span class="fc" id="L112">            return false;</span>
+        }
+<span class="fc" id="L114">        app.image(this.sprite, this.x-5, this.y-5);</span>
+<span class="fc" id="L115">        return true;</span>
+    }
+
+    /**
+    * Draws the debug line, connecting the ghost to where it is targetting.
+    * @return true if can be drawn, false when frightened or dead
+    */
+    public boolean drawDebugLine() {
+<span class="fc bfc" id="L123" title="All 4 branches covered.">        if (this.isFrightened() || this.isDead()) {</span>
+<span class="fc" id="L124">            return false;</span>
+        }
+<span class="fc" id="L126">        this.app.line(this.x, this.y, this.target.getx(), this.target.gety());</span>
+<span class="fc" id="L127">        return true;</span>
+    }
+
+    /**
+    * Updates the ghost after one frame, and how it responds to the updated
+    * arena and other entities. Does not draw the ghost.
+    * @return true if can be updated, otherwise false when dead
+    */
+    public boolean tick() {
+<span class="fc bfc" id="L136" title="All 2 branches covered.">        if (this.isDead()) {</span>
+<span class="fc" id="L137">            return false;</span>
+        }
+<span class="fc" id="L139">        updateMode();</span>
+<span class="fc" id="L140">        setTarget(this.player);</span>
+<span class="fc" id="L141">        move();</span>
+<span class="fc" id="L142">        return true;</span>
+    }
+
+    /**
+    * Updates the mode of the ghost. When frightened, update the frightened
+    * counter only. When unfrightened, updates the mode according to the
+    * modelengths and resets to the first modelength when all modelengths have
+    * been iterated through.
+    */
+    public void updateMode() {
+<span class="fc bfc" id="L152" title="All 2 branches covered.">        if (frightenedCounter &gt; 0) {</span>
+<span class="fc" id="L153">            frightenedCounter--;</span>
+        } else {
+            // NORMAL CHANGE MODES
+<span class="fc bfc" id="L156" title="All 2 branches covered.">            if (curMode == GhostMode.FRIGHTENED) {</span>
+                // unFrighten only once when timer finishes
+<span class="fc" id="L158">                this.unFrightened();</span>
+            }
+<span class="fc bfc" id="L160" title="All 2 branches covered.">            if (myFrames &gt;= curModeLength * 60) {</span>
+<span class="fc" id="L161">                myFrames = 0;</span>
+<span class="fc bfc" id="L162" title="All 2 branches covered.">                if (curModeLengthIndex + 1 == numOfModes) {</span>
+                    // when final mode runs out
+<span class="fc" id="L164">                    curModeLengthIndex = 0;</span>
+<span class="fc" id="L165">                    curModeLength = modeLengths.get(0);</span>
+<span class="fc" id="L166">                    curMode = GhostMode.SCATTER;</span>
+                } else {
+<span class="fc" id="L168">                    curModeLength = modeLengths.get(++curModeLengthIndex);</span>
+<span class="fc" id="L169">                    curMode = curMode.opp();</span>
+                }
+            }
+<span class="fc" id="L172">            myFrames++; // do not count frames when frightened</span>
+        }
+
+<span class="fc" id="L175">    }</span>
+
+    /**
+    * Sets the target of the ghost depending on the mode. If currently SCATTER,
+    * then only set to corner. If CHASE, then set to the given target.
+    *
+    */
+    public void setTarget(Collide chaseTarget) {
+        // Set Target based on current Ghost Mode
+<span class="fc bfc" id="L184" title="All 2 branches covered.">        if (this.curMode == GhostMode.CHASE){</span>
+<span class="fc" id="L185">            this.target = chaseTarget;</span>
+        }
+<span class="fc" id="L187">        this.target = this.corner;</span>
+<span class="fc" id="L188">    }</span>
+
+    /**
+    *
+    *
+    *
+    */
+    public void beFrightened() {
+        // Only switch when first becoming Frightened
+<span class="fc bfc" id="L197" title="All 2 branches covered.">        if (this.curMode != GhostMode.FRIGHTENED) {</span>
+<span class="fc" id="L198">            this.prevMode = this.curMode;</span>
+<span class="fc" id="L199">            this.curMode = GhostMode.FRIGHTENED;</span>
+<span class="fc bfc" id="L200" title="All 2 branches covered.">        } else if (this.isSodaFrightened()) {</span>
+<span class="fc" id="L201">            this.unFrightened();</span>
+<span class="fc" id="L202">            this.beFrightened();</span>
+        }
+<span class="fc" id="L204">        this.frightenedCounter = this.frightenedLength * 60;</span>
+<span class="fc" id="L205">        this.sprite = this.frightSprite;</span>
+<span class="fc" id="L206">    }</span>
+
+    /**
+    *
+    *
+    *
+    */
+    public void unFrightened() {
+<span class="fc" id="L214">        this.curMode = this.prevMode;</span>
+<span class="fc" id="L215">        this.sprite = this.normalSprite;</span>
+<span class="fc" id="L216">        this.isSodaFrightened = false;</span>
+<span class="fc" id="L217">    }</span>
+
+    /**
+    *
+    *
+    *
+    */
+    public void beSodaFright() {
+<span class="fc" id="L225">        this.beFrightened();</span>
+<span class="fc" id="L226">        this.isSodaFrightened = true;</span>
+<span class="fc" id="L227">        this.sprite = this.sodaSprite;</span>
+<span class="fc" id="L228">    }</span>
+
+    /**
+    *
+    *
+    *
+    */
+    public boolean move() {
+        // move depending on nexDir, but if not, uses curDir
+<span class="fc" id="L237">        chase(this.target);</span>
+<span class="fc" id="L238">        tryMove(nexDir);</span>
+<span class="fc" id="L239">        return true; // Ghost moves are guaranteed to work;</span>
+
+    }
+
+    /**
+    *
+    *
+    *
+    */
+    public void chase(Collide entity) {
+<span class="fc" id="L249">        Map&lt;Double, Direction&gt; moves = possibleMoves(entity);</span>
+        // Dead end
+<span class="fc bfc" id="L251" title="All 2 branches covered.">        if (moves.size() == 0) {</span>
+<span class="fc" id="L252">            this.nexDir = this.nexDir.opp();</span>
+<span class="fc" id="L253">            return;</span>
+        }
+
+        // Get first move (shortest)
+<span class="fc" id="L257">        List&lt;Double&gt; keys = new ArrayList&lt;Double&gt;();</span>
+<span class="fc bfc" id="L258" title="All 2 branches covered.">        for (Double k : moves.keySet()) {</span>
+<span class="fc" id="L259">            keys.add(k);</span>
+<span class="fc" id="L260">        }</span>
+
+<span class="fc bfc" id="L262" title="All 2 branches covered.">        if (this.isFrightened()) {</span>
+            // choose random path;
+<span class="fc" id="L264">            int rdm = genRandom.nextInt(keys.size());</span>
+<span class="fc" id="L265">            this.nexDir = moves.get(keys.get(rdm));</span>
+<span class="fc" id="L266">        } else {</span>
+<span class="fc" id="L267">            this.nexDir = moves.get(keys.get(0));</span>
+        }
+
+<span class="fc" id="L270">    }</span>
+
+    /**
+    *
+    *
+    *
+    */
+    public Map&lt;Double, Direction&gt; possibleMoves(Collide entity) {
+        /* For non-opposite directions, retrieve the distance to
+        Waka, and add the direction to Map, with distance as key
+        */
+<span class="fc" id="L281">        Map&lt;Double, Direction&gt; moves = new TreeMap&lt;Double, Direction&gt;();</span>
+<span class="fc bfc" id="L282" title="All 2 branches covered.">        for (Direction d : Direction.values() ) {</span>
+<span class="fc bfc" id="L283" title="All 2 branches covered.">            if (d != this.nexDir.opp()) { // cannot backtrack</span>
+
+<span class="fc" id="L285">                double dist = canMove(d, entity); // retrieves distance</span>
+<span class="fc bfc" id="L286" title="All 2 branches covered.">                if (dist &gt;= 0 ) { // ignores walls</span>
+<span class="fc" id="L287">                    moves.put(dist, d);</span>
+                }
+
+            }
+        }
+<span class="fc" id="L292">        return moves;</span>
+    }
+
+    /**
+    *
+    *
+    *
+    */
+    public double canMove(Direction d, Collide entity) {
+        /* check if move is valid, and returns
+        euclidean distance to Waka */
+
+<span class="fc bfc" id="L304" title="All 2 branches covered.">        if (d == Direction.STOP) {</span>
+<span class="fc" id="L305">            return -1;</span>
+        }
+<span class="fc" id="L307">        double dist = -1;</span>
+
+<span class="fc" id="L309">        int[] coords = d.update(this.x, this.y, this.speed);</span>
+<span class="fc" id="L310">        int ox = this.x;</span>
+<span class="fc" id="L311">        int oy = this.y;</span>
+
+<span class="fc" id="L313">        this.x = coords[0];</span>
+<span class="fc" id="L314">        this.y = coords[1];</span>
+
+<span class="fc bfc" id="L316" title="All 2 branches covered.">        if (this.checkWall()) {</span>
+<span class="fc" id="L317">            dist = -1;</span>
+        } else {
+            // Waka player = this.app.getPlayer();
+<span class="fc" id="L320">            dist = distanceTo(entity); // UPDATE HOW TO CHASE WAKA THROUGH PARAMETER</span>
+        }
+<span class="fc" id="L322">        this.x = ox;</span>
+<span class="fc" id="L323">        this.y = oy;</span>
+
+<span class="fc" id="L325">        return dist;</span>
+    }
+
+    /**
+    *
+    *
+    *
+    */
+    public double distanceTo(Collide entity) {
+<span class="fc" id="L334">        double wX = entity.getx();</span>
+<span class="fc" id="L335">        double wY = entity.gety();</span>
+
+<span class="fc" id="L337">        double distance = Math.sqrt(Math.pow(this.x - wX, 2)</span>
+<span class="fc" id="L338">                                    + Math.pow(this.y - wY, 2));</span>
+<span class="fc" id="L339">        return distance;</span>
+    }
+
+    /**
+    *
+    *
+    *
+    */
+    public int interact() {
+<span class="fc" id="L348">        return 0;</span>
+    }
+
+    /**
+    *
+    *
+    *
+    */
+    public void die() {
+<span class="fc" id="L357">        this.death = true;</span>
+<span class="fc" id="L358">    }</span>
+
+    /**
+    *
+    *
+    *
+    */
+    public boolean isDead() {
+<span class="fc" id="L366">        return this.death;</span>
+    }
+
+    /**
+    *
+    *
+    *
+    */
+    public boolean isFrightened() {
+<span class="fc bfc" id="L375" title="All 2 branches covered.">        if (frightenedCounter &gt; 0 ) {</span>
+<span class="fc" id="L376">            return true;</span>
+        }
+<span class="fc" id="L378">        return false;</span>
+    }
+
+    /**
+    *
+    *
+    *
+    */
+    public boolean isSodaFrightened() {
+<span class="fc" id="L387">        return this.isSodaFrightened;</span>
+    }
+
+    /**
+    *
+    *
+    *
+    */
+    public void resetGhost() {
+<span class="fc" id="L396">        this.resetActor();</span>
+        // RESET GHOST AFTER WAKA DEATH
+<span class="fc" id="L398">        this.sprite = normalSprite;</span>
+<span class="fc" id="L399">        this.frightenedCounter = 0;</span>
+<span class="fc" id="L400">        this.isSodaFrightened = false;</span>
+<span class="fc" id="L401">        this.death = false;</span>
+
+<span class="fc" id="L403">        this.myFrames = 0;</span>
+<span class="fc" id="L404">        this.curMode = GhostMode.SCATTER;</span>
+<span class="fc" id="L405">        this.curModeLength = modeLengths.get(0);</span>
+<span class="fc" id="L406">        this.curModeLengthIndex = 0;</span>
+<span class="fc" id="L407">    }</span>
+}
+
+class Ambusher extends Ghost {
+
+    /**
+    *
+    *
+    *
+    */
+    public Ambusher(int x, int y, int speed, App app, List&lt;Integer&gt; modeLengths) {
+<span class="fc" id="L418">        super(x, y, speed, app, modeLengths);</span>
+<span class="fc" id="L419">        this.normalSprite = app.loadImage(&quot;src/main/resources/ambusher.png&quot;);</span>
+<span class="fc" id="L420">        this.sprite = normalSprite;</span>
+<span class="fc" id="L421">        this.corner = corners[1];</span>
+<span class="fc" id="L422">    }</span>
+
+    /**
+    *
+    *
+    *
+    */
+    public boolean tick() {
+<span class="fc bfc" id="L430" title="All 2 branches covered.">        if (this.isDead()) {</span>
+<span class="fc" id="L431">            return false;</span>
+        }
+<span class="fc" id="L433">        updateMode();</span>
+
+<span class="fc" id="L435">        int[] coords = this.player.getCoordsAhead(4);</span>
+<span class="fc" id="L436">        int x = coords[0];</span>
+<span class="fc" id="L437">        int y = coords[1];</span>
+<span class="fc" id="L438">        Collide ambushTarget = new Waka(x, y);</span>
+<span class="fc" id="L439">        setTarget(ambushTarget);</span>
+
+<span class="fc" id="L441">        move();</span>
+<span class="fc" id="L442">        return true;</span>
+
+    }
+}
+
+class Ignorant extends Ghost {
+
+    /**
+    *
+    *
+    *
+    */
+    public Ignorant(int x, int y, int speed, App app, List&lt;Integer&gt; modeLengths) {
+<span class="fc" id="L455">        super(x, y, speed, app, modeLengths);</span>
+<span class="fc" id="L456">        this.normalSprite = app.loadImage(&quot;src/main/resources/ignorant.png&quot;);</span>
+<span class="fc" id="L457">        this.sprite = normalSprite;</span>
+<span class="fc" id="L458">        this.corner = corners[3];</span>
+<span class="fc" id="L459">    }</span>
+
+    /**
+    *
+    *
+    *
+    */
+    public boolean tick() {
+<span class="fc bfc" id="L467" title="All 2 branches covered.">        if (this.isDead()) {</span>
+<span class="fc" id="L468">            return false;</span>
+        }
+<span class="fc" id="L470">        updateMode();</span>
+
+<span class="fc bfc" id="L472" title="All 2 branches covered.">        if (distanceTo(this.player) &gt;= 8*16) {</span>
+<span class="fc" id="L473">            setTarget(this.player);</span>
+        } else {
+<span class="fc" id="L475">            setTarget(this.corner);</span>
+        }
+
+<span class="fc" id="L478">        move();</span>
+<span class="fc" id="L479">        return true;</span>
+    }
+
+}
+
+class Whim extends Ghost {
+
+    /**
+    *
+    *
+    *
+    */
+    public Whim(int x, int y, int speed, App app, List&lt;Integer&gt; modeLengths) {
+<span class="fc" id="L492">        super(x, y, speed, app, modeLengths);</span>
+<span class="fc" id="L493">        this.normalSprite = app.loadImage(&quot;src/main/resources/whim.png&quot;);</span>
+<span class="fc" id="L494">        this.sprite = normalSprite;</span>
+<span class="fc" id="L495">        this.corner = corners[2];</span>
+<span class="fc" id="L496">    }</span>
+
+    /**
+    *
+    *
+    *
+    */
+    public boolean tick() {
+<span class="fc bfc" id="L504" title="All 2 branches covered.">        if (this.isDead()) {</span>
+<span class="fc" id="L505">            return false;</span>
+        }
+<span class="fc" id="L507">        updateMode();</span>
+
+<span class="fc" id="L509">        int[] coords = this.player.getCoordsAhead(2);</span>
+<span class="fc" id="L510">        Ghost chaser = this.app.getManager().getGhosts().get(0);</span>
+<span class="pc bpc" id="L511" title="1 of 2 branches missed.">        if (!chaser.isDead()) {</span>
+            // Only use Chaser position when alive
+<span class="fc" id="L513">            int chaserX = chaser.getx();</span>
+<span class="fc" id="L514">            int chaserY = chaser.gety();</span>
+
+<span class="fc" id="L516">            int tileX = coords[0];</span>
+<span class="fc" id="L517">            int tileY = coords[1];</span>
+<span class="fc" id="L518">            int vecX = tileX - chaserX;</span>
+<span class="fc" id="L519">            int vecY = tileY - chaserY;</span>
+
+<span class="fc" id="L521">            Collide ambushTarget = new Waka(chaserX + 2*vecX, chaserY + 2*vecY);</span>
+<span class="fc" id="L522">            setTarget(ambushTarget);</span>
+<span class="fc" id="L523">        } else {</span>
+            // Whim becomes Chaser when Chaser is dead
+<span class="nc" id="L525">            setTarget(this.app.getManager().getPlayer());</span>
+        }
+
+<span class="fc" id="L528">        move();</span>
+<span class="fc" id="L529">        return true;</span>
+    }
+
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.5.201910111838</span></div></body></html>

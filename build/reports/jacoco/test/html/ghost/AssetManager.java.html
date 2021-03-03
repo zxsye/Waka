@@ -1,0 +1,211 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>AssetManager.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">Milestone</a> &gt; <a href="index.source.html" class="el_package">ghost</a> &gt; <span class="el_source">AssetManager.java</span></div><h1>AssetManager.java</h1><pre class="source lang-java linenums">package ghost;
+
+import java.util.*;
+
+import java.io.FileReader;
+import java.io.Reader;
+import java.io.IOException;
+
+import org.json.simple.*;
+import org.json.simple.parser.*;
+
+public class AssetManager {
+
+    private App app;
+
+    private String arenaName;
+    private int lives;
+    private int wakaSpeed;
+    private List&lt;Integer&gt; modeLengths;
+
+    private Arena arena;
+    private List&lt;Ghost&gt; ghosts; // change to Ghost list
+    private int frightenedLength;
+    private Waka player;
+
+    private int deathTimer;
+    private boolean isWin;
+    private boolean debug;
+
+    /** Constructs an asset manager which holds assets and information of the game, such as
+     * the length of Ghost modes, whether the game as won or not, and controls debugging mode.
+     * Player and the Ghosts are also stored here.
+     * @param app App file for passing along to Player and Ghosts for drawing
+    */
+<span class="fc" id="L35">    public AssetManager(App app) {</span>
+<span class="fc" id="L36">        this.app = app;</span>
+<span class="fc" id="L37">        this.modeLengths = new ArrayList&lt;Integer&gt;();</span>
+<span class="fc" id="L38">        this.ghosts = new ArrayList&lt;Ghost&gt;();</span>
+<span class="fc" id="L39">        this.deathTimer = 0;</span>
+<span class="fc" id="L40">        this.isWin = false;</span>
+<span class="fc" id="L41">        this.debug = false;</span>
+<span class="fc" id="L42">    }</span>
+
+    /** Parses the configuration file, extracting game parameters from it.
+     * Reads in the player's lives, speed, modeLengths for ghosts, frightened length
+     * and creates all game entities, including player and ghosts.
+    */
+    public void parseConfig() {
+        // Parse configuration file
+<span class="fc" id="L50">        JSONParser parser = new JSONParser();</span>
+<span class="fc" id="L51">        try (Reader reader = new FileReader(&quot;config.json&quot;))</span>
+        {
+<span class="fc" id="L53">            JSONObject obj = (JSONObject) parser.parse(reader);</span>
+
+<span class="fc" id="L55">            this.arenaName = (String) obj.get(&quot;map&quot;);  // map is arena now</span>
+<span class="fc" id="L56">            this.lives = (int)(long) obj.get(&quot;lives&quot;);</span>
+<span class="fc" id="L57">            this.wakaSpeed = (int)(long) obj.get(&quot;speed&quot;);</span>
+
+<span class="fc" id="L59">            JSONArray arr = (JSONArray) obj.get(&quot;modeLengths&quot;);</span>
+<span class="fc bfc" id="L60" title="All 2 branches covered.">            for (int i = 0; i &lt; arr.size(); i++) {</span>
+<span class="fc" id="L61">                this.modeLengths.add((int)(long) arr.get(i));</span>
+            }
+
+<span class="fc" id="L64">            this.frightenedLength = (int)(long) obj.get(&quot;frightenedLength&quot;);</span>
+
+<span class="nc" id="L66">        } catch (IOException e) {</span>
+<span class="nc" id="L67">            e.printStackTrace();</span>
+<span class="nc" id="L68">        } catch (ParseException e) {</span>
+<span class="nc" id="L69">            e.printStackTrace();</span>
+<span class="pc" id="L70">        }</span>
+
+        // Load images and Player objects
+<span class="fc" id="L73">        this.arena = new Arena(this.app, this.arenaName);</span>
+<span class="fc" id="L74">        int[] wakaStart = this.arena.getWakaStart();</span>
+<span class="fc" id="L75">        this.player = new Waka(wakaStart[0], wakaStart[1], this.wakaSpeed, this.lives, this.app);</span>
+
+        // LOAD GHOSTS BASED ON TYPES
+<span class="fc" id="L78">        this.ghosts.clear(); // clear when restarting game</span>
+<span class="fc" id="L79">        int i = 0;</span>
+<span class="fc bfc" id="L80" title="All 2 branches covered.">        for (int[] coord : this.arena.getGhostStart()) {</span>
+<span class="fc" id="L81">            int x = coord[0];</span>
+<span class="fc" id="L82">            int y = coord[1];</span>
+<span class="fc bfc" id="L83" title="All 2 branches covered.">            if (i % 4 == 0) {</span>
+<span class="fc" id="L84">                this.ghosts.add(new Ghost(x, y, this.wakaSpeed, this.app, this.modeLengths));</span>
+<span class="fc bfc" id="L85" title="All 2 branches covered.">            } else if (i % 4 == 1) {</span>
+<span class="fc" id="L86">                this.ghosts.add(new Ambusher(x, y, this.wakaSpeed, this.app, this.modeLengths));</span>
+<span class="fc bfc" id="L87" title="All 2 branches covered.">            } else if (i % 4 == 2) {</span>
+<span class="fc" id="L88">                this.ghosts.add(new Ignorant(x, y, this.wakaSpeed, this.app, this.modeLengths));</span>
+            } else {
+<span class="fc" id="L90">                this.ghosts.add(new Whim(x, y, this.wakaSpeed, this.app, this.modeLengths));</span>
+            }
+<span class="fc" id="L92">            i++;</span>
+<span class="fc" id="L93">        }</span>
+
+<span class="fc" id="L95">    }</span>
+
+    /** Returns the arena object of the game, where the grid of cells are stored.
+     * @return arena of the game
+    */
+    public Arena getArena() {
+<span class="fc" id="L101">        return this.arena;</span>
+    }
+
+    /** Returns the list of ghosts in the game.
+     * @return the list of ghosts in the game
+    */
+    public List&lt;Ghost&gt; getGhosts() {
+<span class="fc" id="L108">        return this.ghosts;</span>
+    }
+
+    /** Returns the player of the game.
+     * @return the player of the game
+    */
+    public Waka getPlayer() {
+<span class="fc" id="L115">        return this.player;</span>
+    }
+
+    /** Returns the frightened length of ghosts, in seconds.
+     * @return frightened length of ghosts
+    */
+    public int getFrightenedLength() {
+<span class="fc" id="L122">        return this.frightenedLength;</span>
+    }
+
+    /** Sets the death timer to -600 (counts upwards only) and resets the game by
+     * calling this.app.setup()
+    */
+    public void death() {
+<span class="fc" id="L129">        this.deathTimer = -600;</span>
+<span class="fc" id="L130">        this.app.setup();</span>
+<span class="fc" id="L131">    }</span>
+
+    /** Draws the assets of the game, including the player, all ghosts, and the arena
+     * by calling each entity separately to draw themselves. If the player dies then
+     * draws the game over screen for 10 seconds or until death timer runs out.
+     * If the player wins, then display the win screen.
+     * @return 1, -1, or 0 symbolising winscreen, deathscreen, gameplay.
+    */
+    public int draw() {
+<span class="fc bfc" id="L140" title="All 2 branches covered.">        if (this.deathTimer++ &lt; 0) { //TODO move to assetmanager or arena</span>
+<span class="fc" id="L141">            app.text(&quot;GAME OVER&quot;, App.WIDTH/2 - 65, App.HEIGHT/2);</span>
+<span class="fc" id="L142">            return -1;</span>
+<span class="fc bfc" id="L143" title="All 2 branches covered.">        } else if (this.isWin) {</span>
+<span class="fc" id="L144">            app.text(&quot;YOU WIN&quot;, App.WIDTH/2 - 55, App.HEIGHT/2);</span>
+<span class="fc" id="L145">            return 1;</span>
+        }
+        // Main loop here
+<span class="fc" id="L148">        this.getPlayer().tick();</span>
+<span class="fc bfc" id="L149" title="All 2 branches covered.">        for (Ghost g : this.getGhosts()) {</span>
+<span class="fc" id="L150">            g.tick();</span>
+<span class="fc" id="L151">        }</span>
+
+        // Drawing player
+<span class="fc" id="L154">        this.getArena().draw();</span>
+<span class="fc" id="L155">        this.getPlayer().draw();</span>
+<span class="fc" id="L156">        this.getPlayer().drawLives();</span>
+<span class="fc bfc" id="L157" title="All 2 branches covered.">        for (Ghost g : this.getGhosts()) {</span>
+<span class="fc" id="L158">            g.draw();</span>
+<span class="pc bpc" id="L159" title="1 of 2 branches missed.">            if (this.debug == true) { // move this away</span>
+<span class="nc" id="L160">                g.drawDebugLine();</span>
+            }
+<span class="fc" id="L162">        }</span>
+<span class="fc" id="L163">        return 0;</span>
+    }
+
+    /** Takes in user input and triggers Waka to respond. If space is pressed, debug
+     * mode is activated. Returns false if currently the game is over.
+     * @param key the char to check for CODED keys
+     * @param keyCode the key that was pressed
+     * @return true or false, whether input was registered
+    */
+    public boolean userInput(char key, int keyCode) {
+<span class="fc bfc" id="L173" title="All 2 branches covered.">        if (deathTimer &lt; 0) {</span>
+<span class="fc" id="L174">            return false;</span>
+        }
+<span class="pc bpc" id="L176" title="1 of 2 branches missed.">        if (key == App.CODED) {</span>
+<span class="fc" id="L177">            this.player.changeDirection(keyCode);</span>
+        }
+<span class="fc bfc" id="L179" title="All 2 branches covered.">        if (keyCode == ' ') {</span>
+<span class="fc bfc" id="L180" title="All 2 branches covered.">            this.debug = !this.debug;</span>
+        }
+<span class="fc" id="L182">        return true;</span>
+    }
+
+    /**
+     * Set the game win status to true.
+    */
+    public void win() {
+<span class="fc" id="L189">        this.isWin = true;</span>
+<span class="fc" id="L190">    }</span>
+
+    /**
+     * Returns if the game is currently over, i.e. the player is dead.
+     * @return true if player is dead and game is currently over.
+    */
+    public boolean isGameOver() {
+<span class="fc bfc" id="L197" title="All 2 branches covered.">        if (this.deathTimer &lt; 0) {</span>
+<span class="fc" id="L198">            return true;</span>
+        }
+<span class="fc" id="L200">        return false;</span>
+    }
+
+    /**
+     * Returns whether the debug mode is currently on.
+     * @return true if debug mode is on
+    */
+    public boolean isDebug() {
+<span class="fc" id="L208">        return this.debug;</span>
+    }
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.5.201910111838</span></div></body></html>

@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<testsuite name="ghost.AppTest" tests="3" skipped="0" failures="0" errors="0" timestamp="2020-11-22T12:08:45" hostname="Zis-MacBook-Pro.local" time="0.833">
+  <properties/>
+  <testcase name="simpleTest()" classname="ghost.AppTest" time="0.298"/>
+  <testcase name="testApp()" classname="ghost.AppTest" time="0.297"/>
+  <testcase name="testArena()" classname="ghost.AppTest" time="0.229"/>
+  <system-out><![CDATA[]]></system-out>
+  <system-err><![CDATA[java.util.ConcurrentModificationException
+	at java.util.ArrayList$Itr.checkForComodification(ArrayList.java:911)
+	at java.util.ArrayList$Itr.next(ArrayList.java:861)
+	at ghost.AssetManager.draw(AssetManager.java:149)
+	at ghost.App.draw(App.java:50)
+	at processing.core.PApplet.handleDraw(PApplet.java:2426)
+	at processing.awt.PSurfaceAWT$12.callDraw(PSurfaceAWT.java:1557)
+	at processing.core.PSurfaceNone$AnimationThread.run(PSurfaceNone.java:316)
+]]></system-err>
+</testsuite>

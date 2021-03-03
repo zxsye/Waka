@@ -1,0 +1,163 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>Arena.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">Milestone</a> &gt; <a href="index.source.html" class="el_package">ghost</a> &gt; <span class="el_source">Arena.java</span></div><h1>Arena.java</h1><pre class="source lang-java linenums">package ghost;
+
+import processing.core.PImage;
+import java.io.*;
+import java.util.*;
+
+/*
+ * Arena class contains the image files for the arena. It is responsible for:
+ * - rendering the arena
+ * - handling player object and arena interactions
+*/
+
+public class Arena {
+    public static final int PIXEL = 18;
+
+    private App app;
+    private Map&lt;Character, PImage&gt; arenaArt;
+    private Cell[][] grid;
+    private List&lt;int[]&gt; ghostStart;
+    private int[] wakaStart;
+    private int totalFruits;
+
+    /**
+     * Constructor for Arena of the game.
+     * @param applet App for drawing
+     * @param filename Name of map file (usually .txt)
+    */
+<span class="fc" id="L28">    public Arena(App applet, String filename) {</span>
+
+<span class="fc" id="L30">        this.arenaArt = new HashMap&lt;Character, PImage&gt;();</span>
+<span class="fc" id="L31">        arenaArt.put('1', applet.loadImage(&quot;src/main/resources/horizontal.png&quot;));</span>
+<span class="fc" id="L32">        arenaArt.put('2', applet.loadImage(&quot;src/main/resources/vertical.png&quot;));</span>
+<span class="fc" id="L33">        arenaArt.put('3', applet.loadImage(&quot;src/main/resources/upLeft.png&quot;));</span>
+<span class="fc" id="L34">        arenaArt.put('4', applet.loadImage(&quot;src/main/resources/upRight.png&quot;));</span>
+<span class="fc" id="L35">        arenaArt.put('5', applet.loadImage(&quot;src/main/resources/downLeft.png&quot;));</span>
+<span class="fc" id="L36">        arenaArt.put('6', applet.loadImage(&quot;src/main/resources/downRight.png&quot;));</span>
+<span class="fc" id="L37">        arenaArt.put('7', applet.loadImage(&quot;src/main/resources/fruit.png&quot;));</span>
+<span class="fc" id="L38">        arenaArt.put('8', applet.loadImage(&quot;src/main/resources/superfruit.png&quot;));</span>
+<span class="fc" id="L39">        arenaArt.put('9', applet.loadImage(&quot;src/main/resources/soda.png&quot;));</span>
+
+<span class="fc" id="L41">        this.app = applet;</span>
+<span class="fc" id="L42">        this.wakaStart = null;</span>
+<span class="fc" id="L43">        this.ghostStart = null;</span>
+
+<span class="fc" id="L45">        this.grid = new Cell[36][28];</span>
+<span class="fc" id="L46">        this.ghostStart = new ArrayList&lt;int[]&gt;();</span>
+<span class="fc" id="L47">        this.totalFruits = 0;</span>
+<span class="fc" id="L48">        this.parseGrid(filename);</span>
+<span class="fc" id="L49">    }</span>
+
+    /**
+     * Parse method for Arena instance, called from constructor of Arena.
+     * Creates a 2D array of Cell objects for the map.
+     * @param filename name of map file
+    */
+    public void parseGrid(String filename) {
+<span class="fc" id="L57">        File path = new File(filename);</span>
+<span class="fc" id="L58">        ArrayList&lt;char[]&gt; matrix = new ArrayList&lt;char[]&gt;();</span>
+
+        // Parse in alphanumerics on the resource file
+        try {
+<span class="fc" id="L62">            Scanner parser = new Scanner(path);</span>
+            // Scan each row and store in array
+            char[] row;
+<span class="fc bfc" id="L65" title="All 2 branches covered.">            while (parser.hasNextLine()) {</span>
+<span class="fc" id="L66">                row = parser.nextLine().toCharArray();</span>
+<span class="fc" id="L67">                matrix.add(row);</span>
+            }
+<span class="fc" id="L69">            parser.close();</span>
+<span class="fc" id="L70">        } catch(FileNotFoundException e) {</span>
+<span class="fc" id="L71">            e.printStackTrace();</span>
+<span class="fc" id="L72">            return;</span>
+<span class="fc" id="L73">        }</span>
+
+        // Create image grid
+<span class="fc bfc" id="L76" title="All 2 branches covered.">        for (int i = 0; i &lt; 36; i++) {</span>
+
+<span class="fc" id="L78">            char[] row = matrix.get(i);</span>
+<span class="fc bfc" id="L79" title="All 2 branches covered.">            for (int j = 0; j &lt; 28; j++) {</span>
+
+<span class="fc" id="L81">                char e = row[j];</span>
+                Cell cellToAdd;
+<span class="fc bfc" id="L83" title="All 2 branches covered.">                if (e == 'p') {</span>
+<span class="fc" id="L84">                    wakaStart = new int[] {j, i};</span>
+<span class="fc" id="L85">                    cellToAdd = new Path( j, i, this.arenaArt.get(e), false );</span>
+<span class="fc bfc" id="L86" title="All 2 branches covered.">                } else if (e == 'g') {</span>
+<span class="fc" id="L87">                    ghostStart.add(new int[] {j, i});</span>
+<span class="fc" id="L88">                    cellToAdd = new Path( j, i, this.arenaArt.get(e), false ); // ghost</span>
+<span class="fc bfc" id="L89" title="All 2 branches covered.">                } else if (e == '7') {</span>
+<span class="fc" id="L90">                    totalFruits++;</span>
+<span class="fc" id="L91">                    cellToAdd = new Path( j, i, this.arenaArt.get(e), true); // fruit</span>
+<span class="fc bfc" id="L92" title="All 2 branches covered.">                } else if (e == '8') {</span>
+<span class="fc" id="L93">                    totalFruits++;</span>
+<span class="fc" id="L94">                    cellToAdd = new SuperFruit( j, i, this.arenaArt.get(e) );</span>
+<span class="fc bfc" id="L95" title="All 2 branches covered.">                } else if (e == '9') {</span>
+<span class="fc" id="L96">                    cellToAdd = new Soda( j, i, this.arenaArt.get(e) );</span>
+                } else {
+<span class="fc" id="L98">                    cellToAdd = new Wall( j, i, this.arenaArt.get(e));</span>
+                }
+<span class="fc" id="L100">                grid[i][j] = cellToAdd; // add cell to the grid</span>
+            }
+
+        }
+<span class="fc" id="L104">    }</span>
+
+    /**
+     * Returns the starting coordinates of the Waka
+     * @return Waka object
+    */
+    public int[] getWakaStart() {
+
+<span class="fc" id="L112">        return wakaStart;</span>
+    }
+
+    /**
+     * Returns a list of the starting coordinates of all Ghosts
+     * @return list of Ghost coordinates as int[x, y]
+    */
+    public List&lt;int[]&gt; getGhostStart() {
+<span class="fc" id="L120">        return ghostStart;</span>
+    }
+
+    /**
+     * Returns a Map of the arenaArt PImages
+     * @return Map object with key as Character corresponding to cell type,
+     * and the value as PImage of the cell
+    */
+    public Map&lt;Character, PImage&gt; getArenaArt() {
+<span class="fc" id="L129">        return this.arenaArt;</span>
+    }
+
+    /**
+     * Returns the grid of the Arena
+     * @return 2D array of Cell objects
+    */
+<span class="fc" id="L136">    public Cell[][] getGrid() { return this.grid; }</span>
+
+    /**
+     * Returns the total number of fruits on the map
+     * @return number of fruit
+    */
+<span class="fc" id="L142">    public int getTotalFruits() { return this.totalFruits; }</span>
+
+    /**
+     * Draws each cell of the map, given that the image of the Cell is not null
+    */
+    public void draw() {
+<span class="fc bfc" id="L148" title="All 2 branches covered.">        for (int i = 0; i &lt; 36; i++) {</span>
+<span class="fc bfc" id="L149" title="All 2 branches covered.">            for (int j = 0; j &lt; 28; j++) {</span>
+                // if (grid[i][j] != null) {
+                    // Tricky plotting the grid
+<span class="fc" id="L152">                PImage cellArt = grid[i][j].getArt();</span>
+
+<span class="fc bfc" id="L154" title="All 2 branches covered.">                if (cellArt != null) {</span>
+<span class="fc" id="L155">                    app.image(cellArt, j*16, i*16);</span>
+                    // }
+                }
+            }
+        }
+<span class="fc" id="L160">    }</span>
+
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.5.201910111838</span></div></body></html>

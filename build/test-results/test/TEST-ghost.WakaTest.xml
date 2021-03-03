@@ -1,0 +1,23 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<testsuite name="ghost.WakaTest" tests="7" skipped="0" failures="0" errors="0" timestamp="2020-11-22T12:08:50" hostname="Zis-MacBook-Pro.local" time="2.8">
+  <properties/>
+  <testcase name="mouthAnimation()" classname="ghost.WakaTest" time="0.231"/>
+  <testcase name="ghostCollision()" classname="ghost.WakaTest" time="0.22"/>
+  <testcase name="simpleTest()" classname="ghost.WakaTest" time="0.322"/>
+  <testcase name="sodaGhost()" classname="ghost.WakaTest" time="0.304"/>
+  <testcase name="wakaDies()" classname="ghost.WakaTest" time="0.995"/>
+  <testcase name="frightenedGhost()" classname="ghost.WakaTest" time="0.359"/>
+  <testcase name="collectables()" classname="ghost.WakaTest" time="0.359"/>
+  <system-out><![CDATA[]]></system-out>
+  <system-err><![CDATA[java.lang.NullPointerException
+	at processing.awt.PGraphicsJava2D.imageImpl(PGraphicsJava2D.java:1574)
+	at processing.core.PGraphics.image(PGraphics.java:3773)
+	at processing.core.PApplet.image(PApplet.java:12611)
+	at ghost.Actor.draw(Actor.java:33)
+	at ghost.AssetManager.draw(AssetManager.java:155)
+	at ghost.App.draw(App.java:50)
+	at processing.core.PApplet.handleDraw(PApplet.java:2426)
+	at processing.awt.PSurfaceAWT$12.callDraw(PSurfaceAWT.java:1557)
+	at processing.core.PSurfaceNone$AnimationThread.run(PSurfaceNone.java:316)
+]]></system-err>
+</testsuite>

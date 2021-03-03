@@ -1,0 +1,214 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>Waka.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">Milestone</a> &gt; <a href="index.source.html" class="el_package">ghost</a> &gt; <span class="el_source">Waka.java</span></div><h1>Waka.java</h1><pre class="source lang-java linenums">package ghost;
+
+import processing.core.PImage;
+import java.util.*;
+
+public class Waka extends Actor{
+
+    private int lives;
+    private int nFruit;
+
+    // Animation
+<span class="fc" id="L12">    private boolean switchSprite = false;</span>
+    private PImage osprite;
+    private PImage spriteClosed;
+    private PImage spriteRight;
+<span class="fc" id="L16">    private Map&lt;Direction, PImage&gt; sprites = new HashMap&lt;Direction, PImage&gt;();</span>
+    private long frameCount;
+
+    // Ghost TRACKING
+    private Direction prevDir;
+
+    public Waka(int x, int y, int speed, int lives, App app) {
+<span class="fc" id="L23">        super(x, y, speed, app);</span>
+        // Parse in sprite images
+<span class="fc" id="L25">        this.sprites.put(Direction.UP, app.loadImage(&quot;src/main/resources/playerUp.png&quot;));</span>
+<span class="fc" id="L26">        this.sprites.put(Direction.DOWN, app.loadImage(&quot;src/main/resources/playerDown.png&quot;));</span>
+<span class="fc" id="L27">        this.sprites.put(Direction.LEFT, app.loadImage(&quot;src/main/resources/playerLeft.png&quot;));</span>
+<span class="fc" id="L28">        this.sprites.put(Direction.RIGHT, app.loadImage(&quot;src/main/resources/playerRight.png&quot;));</span>
+<span class="fc" id="L29">        this.spriteClosed = app.loadImage(&quot;src/main/resources/playerClosed.png&quot;);</span>
+
+        // Setup attributes
+
+<span class="fc" id="L33">        this.lives = lives;</span>
+<span class="fc" id="L34">        this.nFruit = 0;</span>
+
+<span class="fc" id="L36">        this.sprite = sprites.get(nexDir);</span>
+<span class="fc" id="L37">        this.osprite = this.sprite;</span>
+<span class="fc" id="L38">        this.spriteRight = sprites.get(Direction.RIGHT);</span>
+
+<span class="fc" id="L40">        this.frameCount = 1;</span>
+<span class="fc" id="L41">        this.prevDir = nexDir;</span>
+<span class="fc" id="L42">    }</span>
+    public Waka(int pixelX, int pixelY) {
+        // USED ONLY FOR GHOST TRACKING
+<span class="fc" id="L45">        super(pixelX, pixelY);</span>
+<span class="fc" id="L46">    }</span>
+    public boolean tick() {
+<span class="pc bpc" id="L48" title="1 of 2 branches missed.">        if (this.nFruit == this.app.getManager().getArena().getTotalFruits()) {</span>
+<span class="nc" id="L49">            this.app.getManager().win();</span>
+        }
+        // move();
+<span class="fc" id="L52">        updateMouth();</span>
+<span class="fc bfc" id="L53" title="All 2 branches covered.">        if (move()) {</span>
+<span class="fc" id="L54">            return true;</span>
+        } else {
+<span class="fc" id="L56">            return false;</span>
+        }
+
+    }
+    public int getFruits() {
+<span class="fc" id="L61">        return nFruit;</span>
+    }
+    public void drawLives() {
+<span class="fc bfc" id="L64" title="All 2 branches covered.">        for (int i = 0; i &lt; this.lives; i++) {</span>
+<span class="fc" id="L65">            app.image(this.spriteRight, i*26 + 8, 34*16);</span>
+        }
+<span class="fc" id="L67">    }</span>
+    public void updateMouth() {
+<span class="fc bfc" id="L69" title="All 4 branches covered.">        if (frameCount++ % 8 == 0 &amp;&amp; curDir != Direction.STOP) {</span>
+<span class="fc bfc" id="L70" title="All 2 branches covered.">            if (switchSprite == true) {</span>
+<span class="fc" id="L71">                sprite = osprite;</span>
+<span class="fc" id="L72">                switchSprite = false;</span>
+            } else {
+<span class="fc" id="L74">                sprite = spriteClosed;</span>
+<span class="fc" id="L75">                switchSprite = true;</span>
+            }
+        }
+<span class="fc" id="L78">    }</span>
+
+    // Tick helpers
+    public boolean move() {
+        // move depending on nexDir, but if not, uses curDir
+        // System.out.println(nexDir);
+<span class="fc bfc" id="L84" title="All 2 branches covered.">        if (tryMove(nexDir) == true) {</span>
+<span class="fc bfc" id="L85" title="All 2 branches covered.">            if (curDir != nexDir) {</span>
+<span class="fc" id="L86">                curDir = nexDir;</span>
+<span class="fc" id="L87">                prevDir = curDir; // save for ghost tracking</span>
+
+<span class="fc" id="L89">                osprite = sprites.get(nexDir);</span>
+<span class="fc" id="L90">                sprite = osprite;</span>
+<span class="fc" id="L91">                return true;</span>
+            }
+        } else {
+<span class="pc bpc" id="L94" title="1 of 2 branches missed.">            if (tryMove(curDir) == false) {</span>
+<span class="fc" id="L95">                curDir = Direction.STOP;</span>
+<span class="fc" id="L96">                return false;</span>
+            }
+<span class="nc" id="L98">            return true;</span>
+        }
+<span class="fc" id="L100">        return false;</span>
+    }
+    public int interact() {
+        // Return -1 if fatal, otherwise 1 for continue,
+        // @TODO eating ghost mode and return different one
+<span class="fc" id="L105">        int f = checkFruit();</span>
+<span class="fc bfc" id="L106" title="All 2 branches covered.">        if (f &gt; 0) {</span>
+<span class="fc bfc" id="L107" title="All 4 branches covered.">            if (f == 1 || f == 2) {</span>
+<span class="fc" id="L108">                nFruit++; // only count fruits</span>
+            }
+<span class="fc bfc" id="L110" title="All 4 branches covered.">            if (f == 2 || f == 3) { // SUPERFRUIT TIME!!!</span>
+<span class="fc" id="L111">                List&lt;Ghost&gt; ghosts = this.app.getManager().getGhosts();</span>
+<span class="fc bfc" id="L112" title="All 2 branches covered.">                for (Ghost g : ghosts) {</span>
+
+<span class="fc bfc" id="L114" title="All 2 branches covered.">                    if ( f == 2 ) {</span>
+<span class="fc" id="L115">                        g.beFrightened();</span>
+                    } else {
+<span class="fc" id="L117">                        g.beSodaFright();</span>
+                    }
+
+<span class="fc" id="L120">                }</span>
+            }
+        };
+<span class="fc" id="L123">        int ghostBool = checkGhost();</span>
+<span class="fc bfc" id="L124" title="All 2 branches covered.">        if (ghostBool == 1) {</span>
+<span class="fc bfc" id="L125" title="All 2 branches covered.">            if (--this.lives &gt; 0) {</span>
+<span class="fc" id="L126">                resetActor();</span>
+<span class="fc" id="L127">                resetGhosts();</span>
+            } else {
+<span class="fc" id="L129">                return -1; // DEATH</span>
+            }
+        }
+<span class="fc" id="L132">        return 1;</span>
+    }
+
+    public int checkFruit() {
+        /* Checks the all Path cells whether collision with fruit has occurred
+            - when SuperFruit, return 2
+            - when fruit, return 1
+            - normal path, return 0
+            - when Soda, return 3
+        */
+<span class="fc" id="L142">        Cell[][] grid = this.app.getManager().getArena().getGrid();</span>
+
+<span class="fc bfc" id="L144" title="All 2 branches covered.">        for (Cell[] row : grid) {</span>
+<span class="fc bfc" id="L145" title="All 2 branches covered.">            for (Cell c : row) {</span>
+<span class="fc bfc" id="L146" title="All 2 branches covered.">                if (this.isCollide(c)) {</span>
+<span class="fc bfc" id="L147" title="All 2 branches covered.">                    if (c.isSuperFruit()) {</span>
+<span class="fc" id="L148">                        c.eat();</span>
+<span class="fc" id="L149">                        return 2;</span>
+<span class="fc bfc" id="L150" title="All 2 branches covered.">                    } else if (c.isFruit()) {</span>
+<span class="fc" id="L151">                        c.eat();</span>
+<span class="fc" id="L152">                        return 1;</span>
+<span class="fc bfc" id="L153" title="All 2 branches covered.">                    } else if (c.isSoda()) {</span>
+<span class="fc" id="L154">                        c.eat();</span>
+<span class="fc" id="L155">                        return 3;</span>
+                    }
+                }
+
+            }
+        }
+<span class="fc" id="L161">        return 0;</span>
+    }
+    public int checkGhost() {
+        /* Check collision with all ghosts:
+            - return 1 if collide with alive ghost
+            - return 2 if killed ghost
+            - return 0 if no collision
+        */
+<span class="fc" id="L169">        List&lt;Ghost&gt; ghosts = this.app.getManager().getGhosts();</span>
+<span class="fc bfc" id="L170" title="All 2 branches covered.">        for (Ghost g : ghosts) {</span>
+<span class="fc bfc" id="L171" title="All 4 branches covered.">            if (this.isCollide(g) &amp;&amp; g.isDead() == false) {</span>
+
+<span class="fc bfc" id="L173" title="All 2 branches covered.">                if (g.isFrightened()) { // kill the ghost</span>
+<span class="fc bfc" id="L174" title="All 2 branches covered.">                    if (g.isSodaFrightened()) {</span>
+<span class="fc" id="L175">                        return 1;</span>
+                    } else {
+<span class="fc" id="L177">                        g.die();</span>
+<span class="fc" id="L178">                        return 2;</span>
+                    }
+                } else {
+<span class="fc" id="L181">                    return 1;</span>
+                }
+            }
+<span class="fc" id="L184">        }</span>
+<span class="fc" id="L185">        return 0;</span>
+    }
+    public void resetGhosts() {
+<span class="fc" id="L188">        List&lt;Ghost&gt; ghosts = this.app.getManager().getGhosts();</span>
+<span class="fc bfc" id="L189" title="All 2 branches covered.">        for (Ghost g : ghosts) {</span>
+<span class="fc" id="L190">            g.resetGhost();</span>
+<span class="fc" id="L191">        }</span>
+<span class="fc" id="L192">    }</span>
+
+    public int[] getCoordsAhead(int x) {
+        // Returns coordinates for Ambush type Ghost
+        // Finds cell 4 grid spaces ahead using 'nexDir'
+        // System.out.println(this.prevDir);
+<span class="fc" id="L198">        int[] coords = this.prevDir.update(this.x, this.y, x*16);</span>
+<span class="fc" id="L199">        return coords;</span>
+    }
+    public int getLives() {
+<span class="fc" id="L202">        return this.lives;</span>
+    }
+    public PImage getCurSprite() {
+<span class="fc" id="L205">        return this.sprite;</span>
+    }
+    public Map&lt;Direction, PImage&gt; getAllSprites() {
+<span class="fc" id="L208">        return this.sprites;</span>
+    }
+    public PImage getClosedSprite() {
+<span class="fc" id="L211">        return this.spriteClosed;</span>
+    }
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.5.201910111838</span></div></body></html>

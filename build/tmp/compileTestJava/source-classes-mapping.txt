@@ -1,0 +1,10 @@
+ghost/AssetManagerTest.java
+ ghost.AssetManagerTest
+ghost/WakaTest.java
+ ghost.WakaTest
+ghost/AppTest.java
+ ghost.AppTest
+ghost/GhostTest.java
+ ghost.GhostTest
+ghost/ArenaTest.java
+ ghost.ArenaTest

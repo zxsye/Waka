@@ -1,0 +1,52 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>Collide.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">Milestone</a> &gt; <a href="index.source.html" class="el_package">ghost</a> &gt; <span class="el_source">Collide.java</span></div><h1>Collide.java</h1><pre class="source lang-java linenums">package ghost;
+
+public interface Collide {
+    /**
+    * Returns the top boundary, as a y pixel coordinate.
+    * @return the top boundary y pixel coordinate
+    */
+    public int getTop();
+
+    /**
+    * Returns the bottom boundary, as a y pixel coordinate.
+    * @return the bottom boundary y pixel coordinate
+    */
+    public int getBottom();
+
+    /**
+    * Returns the left boundary, as an x pixel coordinate.
+    * @return the left boundary y pixel coordinate
+    */
+    public int getLeft();
+
+    /**
+    * Returns the right boundary, as an x pixel coordinate.
+    * @return the right boundary y pixel coordinate
+    */
+    public int getRight();
+
+    /**
+    * Returns the x coordinate of the object, either as pixel or grid coordinate.
+    * @return the x coordinate, pixel or grid.
+    */
+    public int getx();
+
+    /**
+    * Returns the y coordinate of the object, either as pixel or grid coordinate.
+    * @return the y coordinate, pixel or grid.
+    */
+    public int gety();
+
+    /**
+    * Return whether two objects have collided based on their boundaries,
+    * using their pixel coordinates for comparison.
+    * @param other another Collide object
+    * @return true if current object collides with the argument
+    */
+    public default boolean isCollide(Collide other) {
+<span class="fc bfc" id="L47" title="All 4 branches covered.">        boolean x_overlaps = (this.getLeft() &lt; other.getRight()) &amp;&amp; (this.getRight() &gt; other.getLeft());</span>
+<span class="fc bfc" id="L48" title="All 4 branches covered.">        boolean y_overlaps = (this.getTop() &lt; other.getBottom()) &amp;&amp; (this.getBottom() &gt; other.getTop());</span>
+<span class="fc bfc" id="L49" title="All 4 branches covered.">        return x_overlaps &amp;&amp; y_overlaps;</span>
+    }
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.5.201910111838</span></div></body></html>
